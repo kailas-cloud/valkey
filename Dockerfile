@@ -1,8 +1,8 @@
 # Extract only search module from valkey-bundle
-FROM --platform=linux/amd64 valkey/valkey-bundle:9.0-bookworm AS modules
+FROM --platform=linux/amd64 valkey/valkey-bundle:9.0-trixie AS modules
 
 # Use clean valkey base image
-FROM --platform=linux/amd64 valkey/valkey:9.0-bookworm
+FROM --platform=linux/amd64 valkey/valkey:9.0-trixie
 
 # Copy only the search module (and optionally json/bloom if needed)
 RUN mkdir -p /usr/lib/valkey
