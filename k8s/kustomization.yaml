@@ -5,6 +5,7 @@ namespace: valkey
 
 resources:
   - namespace.yaml
+  - configmap.yaml
   - statefulset.yaml
   - service.yaml
 
