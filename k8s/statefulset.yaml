@@ -7,7 +7,7 @@ metadata:
     app: valkey
 spec:
   serviceName: valkey
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: valkey
@@ -18,8 +18,11 @@ spec:
     spec:
       containers:
         - name: valkey
-          image: ghcr.io/kailas-cloud/valkey:latest
+          image: ghcr.io/kailas-cloud/valkey-bundle:9.0-coordinator
           imagePullPolicy: Always
+          env:
+            - name: SEARCH_MODULE_ARGS
+              value: "--use-coordinator yes --reader-threads 8 --writer-threads 4 --hnsw-block-size 10000 --log-level notice"
           ports:
             - containerPort: 6379
               name: valkey
