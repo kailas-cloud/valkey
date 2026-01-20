@@ -1,17 +1,16 @@
 # Valkey with Search Module and Coordinator
 
-Custom Valkey 9.0 Docker image with valkey-search module and **coordinator enabled** for cluster mode.
+Custom Valkey 9.0 Docker image with **valkey-search** module and **coordinator enabled** for cluster mode.
 
 ## Why This Image?
 
-The official `valkey/valkey-bundle` image includes valkey-search module, but the coordinator is **disabled by default** (`search.use-coordinator no`). This custom image enables the coordinator for cluster deployments.
+The official `valkey/valkey-bundle` includes valkey-search, but the coordinator is **disabled by default** (`search.use-coordinator no`). This image enables the coordinator for full cluster support with cross-shard search.
 
 ## What's Included
 
 - **Valkey 9.0** (latest stable)
 - **valkey-search** - Vector similarity search engine with coordinator enabled
-- **valkey-json** - Native JSON data structure support
-- **valkey-bloom** - Probabilistic data structures (Bloom filters)
+- Minimal footprint - only search module (JSON/Bloom available via uncommenting)
 
 ## Key Differences from valkey-bundle
 
@@ -20,7 +19,8 @@ The official `valkey/valkey-bundle` image includes valkey-search module, but the
 | Search Coordinator | ❌ Disabled | ✅ Enabled |
 | Cluster Mode | Limited | Full support |
 | Cross-shard search | ❌ No | ✅ Yes |
-| Configuration | Default | Optimized |
+| Extra modules | All (json, bloom, ldap) | Only search (configurable) |
+| Image size | Larger | Minimal |
 
 ## Configuration
 
@@ -36,6 +36,22 @@ search.writer-threads 4
 
 # HNSW graph configuration
 search.hnsw-block-size 10000
+```
+
+### Adding More Modules
+
+To enable JSON or Bloom modules, uncomment in both `Dockerfile` and `valkey.conf`:
+
+**Dockerfile:**
+```dockerfile
+COPY --from=modules /usr/lib/valkey/libjson.so /usr/lib/valkey/libjson.so
+COPY --from=modules /usr/lib/valkey/libvalkey_bloom.so /usr/lib/valkey/libvalkey_bloom.so
+```
+
+**valkey.conf:**
+```conf
+loadmodule /usr/lib/valkey/libjson.so
+loadmodule /usr/lib/valkey/libvalkey_bloom.so
 ```
 
 ## Quick Start
@@ -90,26 +106,24 @@ HSET doc:1 vector "\x00\x00\x80?\x00\x00\x00@..."
 FT.SEARCH idx "*=>[KNN 10 @vector $vec]" PARAMS 2 vec "\x00\x00\x80?..." DIALECT 2
 ```
 
-## Build Locally
-
-⚠️ **Note**: Building on macOS ARM requires GitHub Actions for correct AMD64 architecture.
-
-The image uses multi-stage build to extract modules from `valkey-bundle`:
-
-```dockerfile
-FROM --platform=linux/amd64 valkey/valkey-bundle:9.0-bookworm AS modules
-FROM --platform=linux/amd64 valkey/valkey:9.0-bookworm
-COPY --from=modules /usr/lib/valkey/ /usr/lib/valkey/
-```
-
 ## Architecture
 
 ```
-valkey-bundle (source) → Extract .so modules → valkey:9.0 + custom config
-                         ├─ libsearch.so
-                         ├─ libjson.so
-                         └─ libvalkey_bloom.so
+valkey-bundle:9.0 (extract) → libsearch.so → valkey:9.0 + custom config
+                                              ↓
+                                       search.use-coordinator yes
 ```
+
+We use multi-stage build to extract only the search module from the official valkey-bundle image, keeping the final image minimal while leveraging their build infrastructure.
+
+## Build Process
+
+The image is automatically built on GitHub Actions for `linux/amd64` platform:
+
+1. Extract `libsearch.so` from `valkey/valkey-bundle:9.0-bookworm`
+2. Copy into clean `valkey/valkey:9.0-bookworm` base
+3. Add custom configuration with coordinator enabled
+4. Push to `ghcr.io/kailas-cloud/valkey`
 
 ## Environment Variables
 
