@@ -9,7 +9,8 @@ resources:
   - statefulset.yaml
   - service.yaml
 
-commonLabels:
-  app.kubernetes.io/name: valkey
-  app.kubernetes.io/component: database
-  app.kubernetes.io/part-of: kailas-cloud
+labels:
+  - pairs:
+      app.kubernetes.io/name: valkey
+      app.kubernetes.io/component: database
+      app.kubernetes.io/part-of: kailas-cloud

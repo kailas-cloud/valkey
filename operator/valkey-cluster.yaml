@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: valkey
+  labels:
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/part-of: kailas-cloud
+
+---
+apiVersion: hyperspike.io/v1
+kind: Valkey
+metadata:
+  name: valkey-node
+  namespace: valkey
+  labels:
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: kailas-cloud
+spec:
+  # 3 master nodes
+  nodes: 3
+  
+  # 0 replicas per master for now (will add later)
+  replicas: 0
+  
+  # Resources
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  
+  # Storage - Hetzner Cloud Volumes
+  storage:
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: hcloud-volumes
+      resources:
+        requests:
+          storage: 20Gi
+  
+  # Enable Prometheus metrics
+  prometheus: true
+  prometheusLabels:
+    prometheus: kube-prometheus
+  
+  # TLS disabled for now (can enable later with cert-manager)
+  tls: false
+  
+  # Volume permissions (needed for non-root containers)
+  volumePermissions: true
+  
+  # Use custom image with search module and coordinator enabled
+  # Using valkey (not valkey-bundle) because operator calls valkey-server directly
+  # valkey image has loadmodule in valkey.conf
+  image: "ghcr.io/kailas-cloud/valkey:latest"

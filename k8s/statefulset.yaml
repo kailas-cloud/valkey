@@ -20,7 +20,7 @@ spec:
         - name: valkey
           image: ghcr.io/kailas-cloud/valkey-bundle:9.0-coordinator
           imagePullPolicy: Always
-          command: ["/usr/bin/valkey-server"]
+          command: ["/usr/local/bin/valkey-server"]
           args: ["/etc/valkey/valkey.conf"]
           ports:
             - containerPort: 6379

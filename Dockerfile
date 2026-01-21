@@ -12,9 +12,14 @@ COPY --from=modules /usr/lib/valkey/libsearch.so /usr/lib/valkey/libsearch.so
 # Uncomment if you need Bloom filters:
 # COPY --from=modules /usr/lib/valkey/libvalkey_bloom.so /usr/lib/valkey/libvalkey_bloom.so
 
-# Copy custom configuration with coordinator enabled
-COPY valkey.conf /usr/local/etc/valkey/valkey.conf
+# Move original valkey-server and create wrapper that injects module loading
+# This allows operators (like hyperspike/valkey-operator) to call valkey-server
+# directly while still loading our search module with coordinator
+RUN mv /usr/bin/valkey-server /usr/bin/valkey-server-original
+
+COPY valkey-server-wrapper.sh /usr/bin/valkey-server
+RUN chmod +x /usr/bin/valkey-server
 
 EXPOSE 6379
 
-CMD ["valkey-server", "/usr/local/etc/valkey/valkey.conf"]
+CMD ["valkey-server"]
